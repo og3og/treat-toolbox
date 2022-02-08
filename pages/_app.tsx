@@ -10,21 +10,21 @@ export default function App({ Component, pageProps }: AppProps) {
   const [cookie, setCookie] = useCookies(["token"]);
 
   useEffect(() => {
-    return auth.onAuthStateChanged((user) => {
-      if (user) {
-        user.getIdToken().then((token) => {
-          setCookie("token", token, {
-            path: "/",
-            maxAge: 3600,
-            sameSite: true,
-          });
-        });
-      } else {
-        signInAnonymously(auth).catch(function (error) {
-          console.log(error);
-        });
-      }
-    });
+    // return auth.onAuthStateChanged((user) => {
+    //   if (user) {
+    //     user.getIdToken().then((token) => {
+    //       setCookie("token", token, {
+    //         path: "/",
+    //         maxAge: 3600,
+    //         sameSite: true,
+    //       });
+    //     });
+    //   } else {
+    //     signInAnonymously(auth).catch(function (error) {
+    //       console.log(error);
+    //     });
+    //   }
+    // });
   });
 
   return <Component {...pageProps} />;

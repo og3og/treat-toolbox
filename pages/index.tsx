@@ -5,9 +5,12 @@ import HeaderWithAddButton from "../components/HeaderWithAddButton";
 import Project, { Projects } from "../models/project";
 import { EmptyState } from "../components/EmptyState";
 import { DestructiveModal } from "../components/DestructiveModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import { useCookies } from "react-cookie";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../app-firebase";
 
 interface Props {
   projects: Project[];
@@ -16,6 +19,8 @@ interface Props {
 export default function IndexPage(props: Props) {
   let projects = props.projects;
 
+  const [cookie] = useCookies(["token"]);
+  const [user, loading, error] = useAuthState(auth);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [projectIdToDelete, setProjectIdToDelete] = useState<string | null>(
     null
@@ -42,6 +47,16 @@ export default function IndexPage(props: Props) {
     setProjectIdToDelete(null);
     setDeleteModalOpen(false);
   };
+
+  useEffect(() => {
+    if(!user || user.isAnonymous || loading) {
+      router.push(
+        {
+          pathname: "/login"
+        }
+      );
+    }
+  }, [user, loading]);
 
   if (!projects || projects.length == 0) {
     return (
@@ -85,79 +100,79 @@ export default function IndexPage(props: Props) {
                   <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Name
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Description
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          ></th>
-                        </tr>
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Description
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        ></th>
+                      </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {projects.map((project) => {
-                          return (
-                            <Link
+                      {projects.map((project) => {
+                        return (
+                          <Link
+                            key={project.id}
+                            href={"/projects/" + project.id}
+                            passHref={true}
+                          >
+                            <tr
                               key={project.id}
-                              href={"/projects/" + project.id}
-                              passHref={true}
+                              className="hover:bg-gray-100 cursor-pointer"
                             >
-                              <tr
-                                key={project.id}
-                                className="hover:bg-gray-100 cursor-pointer"
-                              >
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-900">
-                                    {project.name}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-gray-500 max-w-xs truncate overflow-ellipsis max-h-14">
-                                    {project.description}
-                                  </div>
-                                </td>
-                                <td align="right">
-                                  <Link
-                                    href={"/projects/" + project.id + "/edit"}
-                                    passHref={true}
-                                  >
-                                    <a
-                                      href="#"
-                                      className="text-indigo-600 hover:text-indigo-900 inline-block mr-2"
-                                    >
-                                      <PencilAltIcon
-                                        className="h-5 w-5 text-gray-400"
-                                        aria-hidden="true"
-                                      />
-                                    </a>
-                                  </Link>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {project.name}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm text-gray-500 max-w-xs truncate overflow-ellipsis max-h-14">
+                                  {project.description}
+                                </div>
+                              </td>
+                              <td align="right">
+                                <Link
+                                  href={"/projects/" + project.id + "/edit"}
+                                  passHref={true}
+                                >
                                   <a
                                     href="#"
-                                    onClick={(e) =>
-                                      confirmDeleteProject(e, project.id)
-                                    }
                                     className="text-indigo-600 hover:text-indigo-900 inline-block mr-2"
                                   >
-                                    <TrashIcon
+                                    <PencilAltIcon
                                       className="h-5 w-5 text-gray-400"
                                       aria-hidden="true"
                                     />
                                   </a>
-                                </td>
-                              </tr>
-                            </Link>
-                          );
-                        })}
+                                </Link>
+                                <a
+                                  href="#"
+                                  onClick={(e) =>
+                                    confirmDeleteProject(e, project.id)
+                                  }
+                                  className="text-indigo-600 hover:text-indigo-900 inline-block mr-2"
+                                >
+                                  <TrashIcon
+                                    className="h-5 w-5 text-gray-400"
+                                    aria-hidden="true"
+                                  />
+                                </a>
+                              </td>
+                            </tr>
+                          </Link>
+                        );
+                      })}
                       </tbody>
                     </table>
                   </div>
@@ -193,14 +208,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     return {
       props: {
-        projects,
-      },
+        projects
+      }
     };
   } catch (error) {
     console.log("Error: ", error);
 
     return {
-      props: {},
+      props: {}
     };
   }
 };
